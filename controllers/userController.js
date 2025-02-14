@@ -170,7 +170,7 @@ const getUserListings = async (req, res) => {
       seller: req.params.id,
       status: 'active',
     })
-      .populate('card', 'name game setName imageUrl currentPrice')
+      .populate('card', 'name game setName imageUrl currentPrice externalId')
       .sort({ createdAt: -1 });
 
     res.json({

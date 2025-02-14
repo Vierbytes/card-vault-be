@@ -66,7 +66,7 @@ const createOffer = async (req, res) => {
     await tradeOffer.populate('listing');
     await tradeOffer.populate('buyer', 'username avatar');
     await tradeOffer.populate('seller', 'username avatar');
-    await tradeOffer.populate('card', 'name game setName imageUrl');
+    await tradeOffer.populate('card', 'name game setName imageUrl externalId');
 
     res.status(201).json({
       success: true,
@@ -97,7 +97,7 @@ const getMyOffersSent = async (req, res) => {
     const offers = await TradeOffer.find(filter)
       .populate('listing', 'price status condition')
       .populate('seller', 'username avatar')
-      .populate('card', 'name game setName imageUrl')
+      .populate('card', 'name game setName imageUrl externalId')
       .sort({ createdAt: -1 });
 
     res.json({
@@ -129,7 +129,7 @@ const getMyOffersReceived = async (req, res) => {
     const offers = await TradeOffer.find(filter)
       .populate('listing', 'price status condition')
       .populate('buyer', 'username avatar')
-      .populate('card', 'name game setName imageUrl')
+      .populate('card', 'name game setName imageUrl externalId')
       .sort({ createdAt: -1 });
 
     res.json({
@@ -157,7 +157,7 @@ const getOfferById = async (req, res) => {
       .populate('listing', 'price status condition description')
       .populate('buyer', 'username avatar createdAt')
       .populate('seller', 'username avatar createdAt')
-      .populate('card', 'name game setName imageUrl currentPrice rarity');
+      .populate('card', 'name game setName imageUrl currentPrice rarity externalId');
 
     if (!offer) {
       return res.status(404).json({
@@ -232,7 +232,7 @@ const acceptOffer = async (req, res) => {
     // Populate for response
     await offer.populate('buyer', 'username avatar');
     await offer.populate('seller', 'username avatar');
-    await offer.populate('card', 'name game setName imageUrl');
+    await offer.populate('card', 'name game setName imageUrl externalId');
     await offer.populate('listing', 'price status condition');
 
     res.json({
@@ -290,7 +290,7 @@ const declineOffer = async (req, res) => {
 
     await offer.populate('buyer', 'username avatar');
     await offer.populate('seller', 'username avatar');
-    await offer.populate('card', 'name game setName imageUrl');
+    await offer.populate('card', 'name game setName imageUrl externalId');
     await offer.populate('listing', 'price status condition');
 
     res.json({
@@ -345,7 +345,7 @@ const cancelOffer = async (req, res) => {
 
     await offer.populate('buyer', 'username avatar');
     await offer.populate('seller', 'username avatar');
-    await offer.populate('card', 'name game setName imageUrl');
+    await offer.populate('card', 'name game setName imageUrl externalId');
     await offer.populate('listing', 'price status condition');
 
     res.json({
@@ -387,7 +387,7 @@ const getOffersForListing = async (req, res) => {
 
     const offers = await TradeOffer.find({ listing: req.params.listingId })
       .populate('buyer', 'username avatar')
-      .populate('card', 'name game setName imageUrl')
+      .populate('card', 'name game setName imageUrl externalId')
       .sort({ createdAt: -1 });
 
     res.json({

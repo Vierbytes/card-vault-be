@@ -45,7 +45,7 @@ const getListings = async (req, res) => {
 
     // Execute query with populate to get card and seller info
     let query = Listing.find(filter)
-      .populate('card', 'name game setName imageUrl currentPrice rarity')
+      .populate('card', 'name game setName imageUrl currentPrice rarity externalId')
       .populate('seller', 'username avatar')
       .skip(skip)
       .limit(parseInt(limit))
@@ -90,7 +90,7 @@ const getListings = async (req, res) => {
 const getListingById = async (req, res) => {
   try {
     const listing = await Listing.findById(req.params.id)
-      .populate('card', 'name game setName setCode cardNumber imageUrl currentPrice rarity')
+      .populate('card', 'name game setName setCode cardNumber imageUrl currentPrice rarity externalId')
       .populate('seller', 'username avatar bio createdAt');
 
     if (!listing) {
@@ -175,7 +175,7 @@ const createListing = async (req, res) => {
     });
 
     // Populate the listing data for response
-    await listing.populate('card', 'name game setName imageUrl currentPrice');
+    await listing.populate('card', 'name game setName imageUrl currentPrice externalId');
     await listing.populate('seller', 'username');
 
     res.status(201).json({
@@ -228,7 +228,7 @@ const updateListing = async (req, res) => {
     await listing.save();
 
     // Populate for response
-    await listing.populate('card', 'name game setName imageUrl currentPrice');
+    await listing.populate('card', 'name game setName imageUrl currentPrice externalId');
     await listing.populate('seller', 'username');
 
     res.json({
@@ -296,7 +296,7 @@ const getMyListings = async (req, res) => {
     if (status) filter.status = status;
 
     const listings = await Listing.find(filter)
-      .populate('card', 'name game setName imageUrl currentPrice')
+      .populate('card', 'name game setName imageUrl currentPrice externalId')
       .sort({ createdAt: -1 });
 
     res.json({

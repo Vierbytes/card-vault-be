@@ -136,7 +136,7 @@ const addToCollection = async (req, res) => {
     }
 
     // Populate for response
-    await collectionItem.populate('card', 'name game setName imageUrl currentPrice');
+    await collectionItem.populate('card', 'name game setName imageUrl currentPrice externalId');
 
     res.status(201).json({
       success: true,
@@ -186,7 +186,7 @@ const updateCollectionItem = async (req, res) => {
 
     await collectionItem.save();
 
-    await collectionItem.populate('card', 'name game setName imageUrl currentPrice');
+    await collectionItem.populate('card', 'name game setName imageUrl currentPrice externalId');
 
     res.json({
       success: true,

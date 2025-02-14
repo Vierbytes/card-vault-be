@@ -22,7 +22,7 @@ const getMyWishlist = async (req, res) => {
     if (priority) filter.priority = priority;
 
     let wishlist = await Wishlist.find(filter)
-      .populate('card', 'name game setName imageUrl currentPrice rarity')
+      .populate('card', 'name game setName imageUrl currentPrice rarity externalId')
       .sort({ priority: -1, createdAt: -1 });
 
     // Filter by game if specified
@@ -138,7 +138,7 @@ const addToWishlist = async (req, res) => {
       notes: notes || '',
     });
 
-    await wishlistItem.populate('card', 'name game setName imageUrl currentPrice');
+    await wishlistItem.populate('card', 'name game setName imageUrl currentPrice externalId');
 
     res.status(201).json({
       success: true,
@@ -187,7 +187,7 @@ const updateWishlistItem = async (req, res) => {
 
     await wishlistItem.save();
 
-    await wishlistItem.populate('card', 'name game setName imageUrl currentPrice');
+    await wishlistItem.populate('card', 'name game setName imageUrl currentPrice externalId');
 
     res.json({
       success: true,

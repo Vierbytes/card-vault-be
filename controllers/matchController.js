@@ -31,7 +31,7 @@ const getMatches = async (req, res) => {
       seller: { $ne: userId },
       status: 'active',
     })
-      .populate('card', 'name game setName imageUrl currentPrice')
+      .populate('card', 'name game setName imageUrl currentPrice externalId')
       .populate('seller', 'username avatar')
       .limit(20);
 
@@ -64,7 +64,7 @@ const getMatches = async (req, res) => {
       card: { $in: myListingCardIds },
       user: { $ne: userId },
     })
-      .populate('card', 'name game setName imageUrl currentPrice')
+      .populate('card', 'name game setName imageUrl currentPrice externalId')
       .populate('user', 'username avatar')
       .limit(20);
 
