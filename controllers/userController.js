@@ -186,9 +186,63 @@ const getUserListings = async (req, res) => {
   }
 };
 
+/**
+ * @desc    Upload/update user avatar
+ * @route   PUT /api/users/me/avatar
+ * @access  Private
+ *
+ * This was interesting to figure out - multer + Cloudinary handle the
+ * file upload before this function even runs. By the time we get here,
+ * req.file already has the Cloudinary URL. Pretty neat.
+ */
+const updateAvatar = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please upload an image file',
+      });
+    }
+
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    // Cloudinary gives us the URL through req.file.path
+    user.avatar = req.file.path;
+    await user.save();
+
+    res.json({
+      success: true,
+      data: {
+        _id: user._id,
+        username: user.username,
+        email: user.email,
+        bio: user.bio,
+        favoriteGames: user.favoriteGames,
+        avatar: user.avatar,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+      },
+    });
+  } catch (error) {
+    console.error('UpdateAvatar error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to upload avatar',
+    });
+  }
+};
+
 module.exports = {
   getUserById,
   updateProfile,
   updatePassword,
+  updateAvatar,
   getUserListings,
 };
