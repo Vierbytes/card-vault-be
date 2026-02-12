@@ -40,12 +40,30 @@ connectDB();
 
 // Enable CORS - allows frontend to make requests to this API
 // I'm setting specific origin instead of '*' for better security
-app.use(
-  cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
-    credentials: true, // Allow cookies/auth headers
-  })
-);
+// app.use(
+//   cors({
+//     origin: process.env.CLIENT_URL || 'http://localhost:5173',
+//     credentials: true, // Allow cookies/auth headers
+//   })
+// );
+
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://card-vault-teal.vercel.app",
+  "https://card-vault-aet07muvp-vierbytes-projects-ffb97f6e.vercel.app"
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true
+}));
+
 
 // Parse JSON request bodies
 // This lets us access req.body for POST/PUT requests
