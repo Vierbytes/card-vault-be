@@ -23,7 +23,7 @@ const getMyCollection = async (req, res) => {
     if (forTrade !== undefined) filter.forTrade = forTrade === 'true';
 
     let collection = await Collection.find(filter)
-      .populate('card', 'name game setName imageUrl currentPrice rarity')
+      .populate('card', 'name game setName imageUrl currentPrice rarity externalId')
       .sort(sort);
 
     // Filter by game if specified (need to do this after populate)
@@ -95,6 +95,7 @@ const addToCollection = async (req, res) => {
           setName: cardData.setName || 'Unknown Set',
           imageUrl: cardData.imageUrl || '',
           rarity: cardData.rarity || 'Common',
+          currentPrice: cardData.currentPrice || 0,
         });
       }
       resolvedCardId = card._id;

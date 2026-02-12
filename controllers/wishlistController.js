@@ -100,6 +100,7 @@ const addToWishlist = async (req, res) => {
           setName: cardData.setName || 'Unknown Set',
           imageUrl: cardData.imageUrl || '',
           rarity: cardData.rarity || 'Common',
+          currentPrice: cardData.currentPrice || 0,
         });
       }
       resolvedCardId = card._id;
