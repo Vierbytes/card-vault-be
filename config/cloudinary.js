@@ -40,4 +40,21 @@ const uploadAvatar = multer({
   limits: { fileSize: 2 * 1024 * 1024 },
 });
 
-module.exports = { cloudinary, uploadAvatar };
+// Storage for card scan images - these go to a separate folder
+// I'm allowing bigger files here (5MB) since card photos from cameras
+// can be higher resolution than avatar crops
+const scanStorage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: 'cardvault/scans',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
+    // No transformation here - we need the full image for OCR to work well
+  },
+});
+
+const uploadScanImage = multer({
+  storage: scanStorage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+});
+
+module.exports = { cloudinary, uploadAvatar, uploadScanImage };
