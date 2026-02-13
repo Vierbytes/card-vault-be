@@ -8,6 +8,7 @@
 
 const User = require('../models/User');
 const Listing = require('../models/Listing');
+const TradeOffer = require('../models/TradeOffer');
 
 /**
  * @desc    Get user profile by ID (public view)
@@ -239,10 +240,62 @@ const updateAvatar = async (req, res) => {
   }
 };
 
+/**
+ * @desc    Get trade statistics for a user (public)
+ * @route   GET /api/users/:id/trade-stats
+ * @access  Public
+ *
+ * Returns aggregate counts only - no individual offer data.
+ * This is public so anyone can see a trader's track record
+ * before deciding to make an offer.
+ */
+const getUserTradeStats = async (req, res) => {
+  try {
+    const userId = req.params.id;
+
+    // Make sure the user actually exists
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    // Count completed trades (accepted offers) where user was involved
+    const completedTrades = await TradeOffer.countDocuments({
+      $or: [
+        { buyer: userId, status: 'accepted' },
+        { seller: userId, status: 'accepted' },
+      ],
+    });
+
+    // Count total offers sent and received for extra context
+    const offersSent = await TradeOffer.countDocuments({ buyer: userId });
+    const offersReceived = await TradeOffer.countDocuments({ seller: userId });
+
+    res.json({
+      success: true,
+      data: {
+        completedTrades,
+        offersSent,
+        offersReceived,
+      },
+    });
+  } catch (error) {
+    console.error('GetUserTradeStats error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to get trade stats',
+    });
+  }
+};
+
 module.exports = {
   getUserById,
   updateProfile,
   updatePassword,
   updateAvatar,
   getUserListings,
+  getUserTradeStats,
 };

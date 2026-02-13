@@ -12,6 +12,7 @@ const {
   updatePassword,
   updateAvatar,
   getUserListings,
+  getUserTradeStats,
 } = require('../controllers/userController');
 const { protect } = require('../middleware/auth');
 const { uploadAvatar } = require('../config/cloudinary');
@@ -24,5 +25,6 @@ router.put('/me/avatar', protect, uploadAvatar.single('avatar'), updateAvatar);
 // Public routes - view other users
 router.get('/:id', getUserById);
 router.get('/:id/listings', getUserListings);
+router.get('/:id/trade-stats', getUserTradeStats);
 
 module.exports = router;
