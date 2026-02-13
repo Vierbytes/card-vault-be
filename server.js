@@ -27,6 +27,8 @@ const listingRoutes = require('./routes/listingRoutes');
 const collectionRoutes = require('./routes/collectionRoutes');
 const wishlistRoutes = require('./routes/wishlistRoutes');
 const matchRoutes = require('./routes/matchRoutes');
+const tradeOfferRoutes = require('./routes/tradeOfferRoutes');
+const messageRoutes = require('./routes/messageRoutes');
 
 // Initialize Express app
 const app = express();
@@ -94,6 +96,8 @@ app.use('/api/listings', listingRoutes);
 app.use('/api/collections', collectionRoutes);
 app.use('/api/wishlists', wishlistRoutes);
 app.use('/api/matches', matchRoutes);
+app.use('/api/trade-offers', tradeOfferRoutes);
+app.use('/api/messages', messageRoutes);
 
 // 404 handler for undefined routes
 app.use((req, res) => {
