@@ -37,11 +37,32 @@ const userSchema = new mongoose.Schema(
     },
 
     // Password - we'll hash this before saving (see pre-save hook below)
+    // Only required for local auth - social login users won't have a password
     password: {
       type: String,
-      required: [true, 'Please provide a password'],
+      required: [
+        function () {
+          return !this.auth0Id;
+        },
+        'Please provide a password',
+      ],
       minlength: [6, 'Password must be at least 6 characters'],
       select: false, // This means password won't be returned in queries by default
+    },
+
+    // Auth0 ID for social login users (e.g. "google-oauth2|123456789")
+    // sparse: true lets multiple users have null here (all local auth users)
+    auth0Id: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
+
+    // How the user signed up - helps us know if they can change their password
+    authProvider: {
+      type: String,
+      enum: ['local', 'google', 'twitter', 'apple'],
+      default: 'local',
     },
 
     // Optional bio for user profile
@@ -91,9 +112,9 @@ const userSchema = new mongoose.Schema(
  * bcrypt is a popular library for this because it's secure and handles salting.
  */
 userSchema.pre('save', async function () {
-  // Only hash the password if it's been modified (or is new)
-  // This prevents re-hashing an already hashed password
-  if (!this.isModified('password')) {
+  // Only hash the password if it exists and has been modified (or is new)
+  // Social login users won't have a password at all
+  if (!this.password || !this.isModified('password')) {
     return;
   }
 
