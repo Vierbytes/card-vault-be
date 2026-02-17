@@ -13,6 +13,7 @@
 
 const TradeOffer = require('../models/TradeOffer');
 const Listing = require('../models/Listing');
+const { createNotification } = require('./notificationController');
 
 /**
  * @desc    Create a new trade offer on a listing
@@ -67,6 +68,14 @@ const createOffer = async (req, res) => {
     await tradeOffer.populate('buyer', 'username avatar');
     await tradeOffer.populate('seller', 'username avatar');
     await tradeOffer.populate('card', 'name game setName imageUrl externalId');
+
+    // Notify the seller that someone made an offer on their listing
+    await createNotification(
+      listing.seller._id,
+      'offer_received',
+      `${req.user.username} made an offer of $${offeredPrice} on your ${listing.card.name} listing`,
+      tradeOffer._id
+    );
 
     res.status(201).json({
       success: true,
@@ -235,6 +244,14 @@ const acceptOffer = async (req, res) => {
     await offer.populate('card', 'name game setName imageUrl externalId');
     await offer.populate('listing', 'price status condition');
 
+    // Notify the buyer that their offer was accepted
+    await createNotification(
+      offer.buyer._id,
+      'offer_accepted',
+      `${offer.seller.username} accepted your offer on ${offer.card.name}`,
+      offer._id
+    );
+
     res.json({
       success: true,
       data: offer,
@@ -293,6 +310,14 @@ const declineOffer = async (req, res) => {
     await offer.populate('card', 'name game setName imageUrl externalId');
     await offer.populate('listing', 'price status condition');
 
+    // Notify the buyer that their offer was declined
+    await createNotification(
+      offer.buyer._id,
+      'offer_declined',
+      `${offer.seller.username} declined your offer on ${offer.card.name}`,
+      offer._id
+    );
+
     res.json({
       success: true,
       data: offer,
@@ -347,6 +372,14 @@ const cancelOffer = async (req, res) => {
     await offer.populate('seller', 'username avatar');
     await offer.populate('card', 'name game setName imageUrl externalId');
     await offer.populate('listing', 'price status condition');
+
+    // Notify the seller that the buyer cancelled their offer
+    await createNotification(
+      offer.seller._id,
+      'offer_cancelled',
+      `${offer.buyer.username} cancelled their offer on your ${offer.card.name} listing`,
+      offer._id
+    );
 
     res.json({
       success: true,

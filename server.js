@@ -29,6 +29,7 @@ const wishlistRoutes = require('./routes/wishlistRoutes');
 const matchRoutes = require('./routes/matchRoutes');
 const tradeOfferRoutes = require('./routes/tradeOfferRoutes');
 const messageRoutes = require('./routes/messageRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 
 // Initialize Express app
 const app = express();
@@ -98,6 +99,7 @@ app.use('/api/wishlists', wishlistRoutes);
 app.use('/api/matches', matchRoutes);
 app.use('/api/trade-offers', tradeOfferRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // 404 handler for undefined routes
 app.use((req, res) => {
