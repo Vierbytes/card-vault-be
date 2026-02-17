@@ -30,6 +30,9 @@ const matchRoutes = require('./routes/matchRoutes');
 const tradeOfferRoutes = require('./routes/tradeOfferRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
+const transactionRoutes = require('./routes/transactionRoutes');
+const { handleWebhook } = require('./controllers/paymentController');
 
 // Initialize Express app
 const app = express();
@@ -68,6 +71,16 @@ app.use(cors({
 }));
 
 
+// Stripe webhook needs the raw body (not parsed JSON) for signature verification
+// This MUST be mounted BEFORE express.json() or the signature check will fail
+// I learned this the hard way - express.json() parses the body into an object,
+// but Stripe needs the original raw buffer to verify the webhook signature
+app.post(
+  '/api/payments/webhook',
+  express.raw({ type: 'application/json' }),
+  handleWebhook
+);
+
 // Parse JSON request bodies
 // This lets us access req.body for POST/PUT requests
 app.use(express.json());
@@ -100,6 +113,8 @@ app.use('/api/matches', matchRoutes);
 app.use('/api/trade-offers', tradeOfferRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/payments', paymentRoutes);
+app.use('/api/transactions', transactionRoutes);
 
 // 404 handler for undefined routes
 app.use((req, res) => {

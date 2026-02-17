@@ -60,7 +60,7 @@ const tradeOfferSchema = new mongoose.Schema(
     // Current status of the offer
     status: {
       type: String,
-      enum: ['pending', 'accepted', 'declined', 'cancelled'],
+      enum: ['pending', 'accepted', 'declined', 'cancelled', 'completed'],
       default: 'pending',
       index: true,
     },

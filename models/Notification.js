@@ -25,7 +25,7 @@ const notificationSchema = new mongoose.Schema(
     // This helps the frontend style them differently if needed
     type: {
       type: String,
-      enum: ['offer_received', 'offer_accepted', 'offer_declined', 'offer_cancelled'],
+      enum: ['offer_received', 'offer_accepted', 'offer_declined', 'offer_cancelled', 'payment_received'],
       required: true,
     },
 
