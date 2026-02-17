@@ -15,6 +15,7 @@ const axios = require('axios');
 const Card = require('../models/Card');
 const PriceHistory = require('../models/PriceHistory');
 const tcgdex = require('../utils/tcgdexApi');
+const { getCardMechanics } = require('../utils/pokemonTcgApi');
 
 /**
  * @desc    Search Pokemon cards
@@ -58,14 +59,20 @@ const searchCards = async (req, res) => {
  * @access  Public
  *
  * Returns full card details including high-quality image and pricing
- * from TCGPlayer/Cardmarket. This is so much simpler than the old
- * JustTCG approach which required DB caching and name-based searches.
+ * from TCGPlayer/Cardmarket. Also fetches detailed card mechanics
+ * (attacks, abilities, weaknesses, etc.) from the Pokewallet API.
+ *
+ * I originally had both API calls running in parallel with Promise.allSettled,
+ * but Pokewallet uses its own ID system so I need the card name from TCGdex
+ * first to search Pokewallet. So now it's sequential: TCGdex first, then
+ * Pokewallet. The Pokewallet call is still wrapped in a try/catch so if it
+ * fails the card page still loads with just TCGdex data.
  */
 const getCardById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Fetch directly from TCGdex - no need for local DB caching anymore
+    // TCGdex is our primary source - get the card data first
     const card = await tcgdex.getCardById(id);
 
     if (!card) {
@@ -73,6 +80,18 @@ const getCardById = async (req, res) => {
         success: false,
         message: 'Card not found',
       });
+    }
+
+    // Now try to fetch mechanics from Pokewallet using the card name
+    // This is optional - if it fails the page still works without mechanics
+    try {
+      const mechanics = await getCardMechanics(card.name, card.cardNumber);
+      if (mechanics) {
+        card.mechanics = mechanics;
+      }
+    } catch (mechErr) {
+      // Don't let mechanics failure break the whole response
+      console.warn('Failed to fetch mechanics:', mechErr.message);
     }
 
     res.json({
