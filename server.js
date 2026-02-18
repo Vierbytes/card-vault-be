@@ -32,6 +32,7 @@ const messageRoutes = require('./routes/messageRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const transactionRoutes = require('./routes/transactionRoutes');
+const reviewRoutes = require('./routes/reviewRoutes');
 const { handleWebhook } = require('./controllers/paymentController');
 
 // Initialize Express app
@@ -115,6 +116,7 @@ app.use('/api/messages', messageRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/transactions', transactionRoutes);
+app.use('/api/reviews', reviewRoutes);
 
 // 404 handler for undefined routes
 app.use((req, res) => {
