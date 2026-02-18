@@ -9,6 +9,7 @@ const router = express.Router();
 const {
   getListings,
   getListingById,
+  getFilterOptions,
   createListing,
   updateListing,
   deleteListing,
@@ -18,6 +19,9 @@ const { protect } = require('../middleware/auth');
 
 // Public routes
 router.get('/', getListings);
+
+// Get filter options (rarity, set names) for marketplace dropdowns
+router.get('/filters', getFilterOptions);
 
 // Private routes - put specific routes before :id to avoid conflicts
 router.get('/mine', protect, getMyListings);

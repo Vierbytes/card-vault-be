@@ -12,57 +12,71 @@ const Card = require('../models/Card');
  * @desc    Get all active listings (marketplace)
  * @route   GET /api/listings
  * @access  Public
+ *
+ * Supports filtering by price range, condition, card name search,
+ * rarity, and set name. Card-level filters (search, rarity, setName)
+ * work by finding matching Card IDs first, then filtering listings
+ * by those IDs. This is more efficient than filtering after populate
+ * and keeps pagination counts accurate.
  */
 const getListings = async (req, res) => {
   try {
     const {
-      game,
+      search,
       minPrice,
       maxPrice,
       condition,
+      rarity,
+      setName,
       sort = '-createdAt',
       page = 1,
       limit = 20,
     } = req.query;
 
-    // Build query filter
+    // Build query filter - always start with active listings only
     const filter = { status: 'active' };
 
-    // Price range filter
+    // Price range filter (applies directly to Listing.price)
     if (minPrice || maxPrice) {
       filter.price = {};
       if (minPrice) filter.price.$gte = parseFloat(minPrice);
       if (maxPrice) filter.price.$lte = parseFloat(maxPrice);
     }
 
-    // Condition filter
+    // Condition filter (applies directly to Listing.condition)
     if (condition) {
       filter.condition = condition;
     }
+
+    // Card-level filters - search by name, rarity, or set
+    // I find matching Card IDs first, then use $in to filter listings
+    // This way the total count and pagination are accurate
+    if (search || rarity || setName) {
+      const cardFilter = {};
+      if (search) cardFilter.name = { $regex: search, $options: 'i' };
+      if (rarity) cardFilter.rarity = rarity;
+      if (setName) cardFilter.setName = setName;
+
+      const matchingCards = await Card.find(cardFilter).select('_id');
+      filter.card = { $in: matchingCards.map((c) => c._id) };
+    }
+
+    // Validate sort option - only allow specific values to prevent injection
+    const allowedSorts = ['-createdAt', 'price', '-price', '-viewCount'];
+    const sortOption = allowedSorts.includes(sort) ? sort : '-createdAt';
 
     // Calculate pagination
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
     // Execute query with populate to get card and seller info
-    let query = Listing.find(filter)
+    const listings = await Listing.find(filter)
       .populate('card', 'name game setName imageUrl currentPrice rarity externalId')
       .populate('seller', 'username avatar')
       .skip(skip)
       .limit(parseInt(limit))
-      .sort(sort);
+      .sort(sortOption);
 
-    // If filtering by game, we need to filter after populate
-    // This is a bit inefficient but works for now
-    let listings = await query;
-
-    // Filter by game if specified
-    if (game) {
-      listings = listings.filter(
-        (listing) => listing.card?.game?.toLowerCase() === game.toLowerCase()
-      );
-    }
-
-    // Get total count for pagination
+    // Get total count for pagination (uses same filter so count is accurate)
     const total = await Listing.countDocuments(filter);
 
     res.json({
@@ -78,6 +92,48 @@ const getListings = async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message || 'Failed to get listings',
+    });
+  }
+};
+
+/**
+ * @desc    Get available filter options for marketplace dropdowns
+ * @route   GET /api/listings/filters
+ * @access  Public
+ *
+ * Returns distinct rarity and set name values from cards that
+ * currently have active listings. This way the dropdowns only
+ * show options that will actually return results.
+ */
+const getFilterOptions = async (req, res) => {
+  try {
+    // Get the card IDs from all active listings
+    const activeCardIds = await Listing.find({ status: 'active' }).distinct('card');
+
+    // Get distinct rarity and setName values from those cards
+    // Filter out empty strings so the dropdowns don't have blank options
+    const rarities = await Card.distinct('rarity', {
+      _id: { $in: activeCardIds },
+      rarity: { $ne: '' },
+    });
+
+    const setNames = await Card.distinct('setName', {
+      _id: { $in: activeCardIds },
+      setName: { $ne: '' },
+    });
+
+    res.json({
+      success: true,
+      data: {
+        rarities: rarities.sort(),
+        setNames: setNames.sort(),
+      },
+    });
+  } catch (error) {
+    console.error('GetFilterOptions error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to get filter options',
     });
   }
 };
@@ -316,6 +372,7 @@ const getMyListings = async (req, res) => {
 module.exports = {
   getListings,
   getListingById,
+  getFilterOptions,
   createListing,
   updateListing,
   deleteListing,
