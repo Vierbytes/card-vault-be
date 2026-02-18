@@ -121,17 +121,29 @@ const getCardPriceHistory = async (req, res) => {
   try {
     const { id } = req.params;
 
+    // Parse the duration query param to figure out how far back to look
+    // The frontend sends values like '7d', '30d', '90d', '180d'
+    const durationMap = { '7d': 7, '30d': 30, '90d': 90, '180d': 180 };
+    const duration = req.query.duration || '30d';
+    const days = durationMap[duration] || 30;
+
+    // Calculate the start date for filtering history entries
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+
     // Get current pricing from TCGdex
     const card = await tcgdex.getCardById(id);
 
     // Check if we have any stored history in our local DB
+    // Only grab entries within the requested time range
     let history = [];
     const localCard = await Card.findOne({ externalId: id });
 
     if (localCard) {
-      const priceEntries = await PriceHistory.find({ card: localCard._id })
-        .sort({ date: 1 })
-        .limit(90);
+      const priceEntries = await PriceHistory.find({
+        card: localCard._id,
+        date: { $gte: startDate },
+      }).sort({ date: 1 });
 
       history = priceEntries.map((entry) => ({
         date: entry.date,
@@ -165,14 +177,50 @@ const getCardPriceHistory = async (req, res) => {
       }
     }
 
+    // Calculate price change percentages (24h and 7d)
+    // I need to look at older entries beyond the current duration filter for this,
+    // so I query separately for the 1-day-ago and 7-day-ago price snapshots
+    let priceChange = null;
+    const currentPrice = card?.currentPrice || 0;
+
+    if (localCard && currentPrice > 0) {
+      const oneDayAgo = new Date();
+      oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+      // Find the most recent entry from at least 1 day ago
+      const dayAgoEntry = await PriceHistory.findOne({
+        card: localCard._id,
+        date: { $lte: oneDayAgo },
+      }).sort({ date: -1 });
+
+      // Find the most recent entry from at least 7 days ago
+      const weekAgoEntry = await PriceHistory.findOne({
+        card: localCard._id,
+        date: { $lte: sevenDaysAgo },
+      }).sort({ date: -1 });
+
+      priceChange = {
+        day: dayAgoEntry
+          ? Math.round(((currentPrice - dayAgoEntry.price) / dayAgoEntry.price) * 1000) / 10
+          : null,
+        week: weekAgoEntry
+          ? Math.round(((currentPrice - weekAgoEntry.price) / weekAgoEntry.price) * 1000) / 10
+          : null,
+      };
+    }
+
     res.json({
       success: true,
       data: {
         cardId: id,
         cardName: card?.name || id,
-        currentPrice: card?.currentPrice || 0,
+        currentPrice,
         prices: card?.prices || null,
         history,
+        priceChange,
       },
     });
   } catch (error) {
